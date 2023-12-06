@@ -17,83 +17,65 @@ using RestSharp;
 using System.Collections.Generic;
 public partial class FatchPlan : System.Web.UI.Page
 {
-   // _FatchPlan _FatchPlan = new _FatchPlan();
+    DataUtility objDUT = new DataUtility();
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!IsPostBack)
-        { 
-          //  monthyear();
-          //  jsondata();
+        {
+            lblmsg.Text = "";
+            recharge_circle();
+            recharge_oprator(1);
         }
     }
 
-    //protected void monthyear()
-    //{
-    //    for (int i = 2010; i <= Convert.ToInt32(System.DateTime.Today.Year); i++)
-    //    {
-    //        ddlyear.Items.Add(i.ToString());
-    //        // lblyear.Text = i.ToString();
-    //    }
-
-    //    for (int i = Convert.ToInt32(12); i >= 1; i--)
-    //    {
-    //        DateTime dt = DateTime.Now;
-    //        var ddt = dt.AddMonths(+i);
-    //        ddlmonths.Items.Add(ddt.ToString("MMMM"));
-    //    }
-    //}
     protected void Button1_Click(object sender, EventArgs e)
     {
-       SendMsg();
+        if (ddlCircle.SelectedIndex == 0)
+        {
+            lblmsg.Text = "Please Select State.";
+            return;
+        }
+        if (ddlOperator.SelectedIndex == 0)
+        {
+            lblmsg.Text = "Please Select Operator.";
+            return;
+        }
+        if (txtmobile.Text.Trim() == "")
+        {
+            lblmsg.Text = "Please Enter Mobile No.";
+            return;
+        }
+        try
+        {
+            SendMsg();
+        }
+        catch (Exception ex)
+        {
+            lblmsg.Text=ex.Message.ToString(); 
+        }
     }
     public class _RPlan1
     {
-      //  [JsonProperty(PropertyName = "Id")]
         public string id { get; set; }
-
-     //   [JsonProperty(PropertyName = "operator_id")]
         public string operator_id { get; set; }
-
-      //  [JsonProperty(PropertyName = "circle_id")]
         public string circle_id { get; set; }
-
-     //   [JsonProperty(PropertyName = "recharge_amount")]
         public string recharge_amount { get; set; }
-
-      //  [JsonProperty(PropertyName = "recharge_talktime")]
         public string recharge_talktime { get; set; }
 
-      //  [JsonProperty(PropertyName = "recharge_validity")]
         public string recharge_validity { get; set; }
 
-      //  [JsonProperty(PropertyName = "recharge_short_desc")]
         public string recharge_short_desc { get; set; }
 
-      //  [JsonProperty(PropertyName = "recharge_long_desc")]
         public string recharge_long_desc { get; set; }
-
-      //  [JsonProperty(PropertyName = "recharge_type")]
         public string recharge_type { get; set; }
 
-    }
-
-    public class GetOperator
-    {
-       // [JsonProperty("circlecode")]
-        public string circlecode { get; set; }
-      //  [JsonProperty("circlename")]
-        public string circlename { get; set; }
     }
     public class _FatchPlan1
     {
         public string Status { get; set; }
         public string ErrorDescription { get; set; }
         public List<_RPlan1> PlanDescription { get; set; }
-        // public string Status { get; set; }
-        // public string ErrorMessage { get; set; }
-        // public string SuccessMessage { get; set; }
 
-        //public List<GetOperator> data { get; set; }
     }
     public void SendMsg()
     {
@@ -101,7 +83,7 @@ public partial class FatchPlan : System.Web.UI.Page
 
         try
         {
-              url = "https://cyrusrecharge.in/API/CyrusPlanFatchAPI.aspx?APIID=AP325695&PASSWORD=DFD56567JHJH&Operator_Code=JIO&Circle_Code=21&MobileNumber=7408618488&data=ALL";
+              url = "https://cyrusrecharge.in/API/CyrusPlanFatchAPI.aspx?APIID=AP325695&PASSWORD=DFD56567JHJH&Operator_Code="+ ddlOperator.SelectedValue + "&Circle_Code="+ ddlCircle.SelectedValue + "&MobileNumber="+ txtmobile.Text.Trim() + "&data=ALL";
 
            // url = "https://Cyrusrecharge.in/api/GetOperator.aspx?memberid=AP325695&pin=90A72CCA45&Method=getcircle";
             //var _Resp = JsonConvert.DeserializeObject <_RPlan>(results);
@@ -115,26 +97,6 @@ public partial class FatchPlan : System.Web.UI.Page
             string _result = response.Content;
 
            var C = JsonConvert.DeserializeObject<_FatchPlan1>(_result);
-            //  List<_FatchPlan1> C = JsonConvert.DeserializeObject<List<_FatchPlan1>>(_result);
-            //foreach (var data in C.ToList())
-            //{
-            //    if (data.Status == "0")
-            //    {
-            //        Label1.Text = data.Status.ToString();
-            //        lblmsg.Text = data.ErrorMessage.ToString();
-            //    }
-            //    else
-            //    { 
-            //        lblmsg.Text = data.SuccessMessage.ToString();
-            //        Label1.Text = data.Status.ToString();
-            //        foreach (var data1 in data.data.ToList())
-            //        {
-            //            DropDownList1.Items.Add(data1.circlecode);
-            //            DropDownList2.Items.Add(data1.circlename);
-            //        }
-            //    }
-            //    //console.writeline($"{data.lat} {data.lng} {data.fixtime}");
-            //}
             if (C.Status == "1")
             {
                 Label1.Text = C.Status.ToString();
@@ -142,12 +104,27 @@ public partial class FatchPlan : System.Web.UI.Page
             }
             else
             {
+                // #Fatch Recharge Plan...
+                string tested = "";
+                int i = 0;
                 Label1.Text = C.Status.ToString();
                 foreach (var data1 in C.PlanDescription.ToList())
                 {
-                    DropDownList1.Items.Add(data1.recharge_amount);
-                    DropDownList2.Items.Add(data1.recharge_short_desc);
+                    tested += @"
+                        <div class=""row align-items-center"">
+            <div class=""col-4 col-lg-2 text-5 text-primary text-center"">&#8377;" + data1.recharge_amount + @" <span class=""text-1 text-muted d-block"">Amount</span></div>
+            <div class=""col-4 col-lg-2 text-3 text-center"">"+data1.recharge_talktime+@"<span class=""text-1 text-muted d-block"">Talktime</span></div>
+            <div class=""col-4 col-lg-2 text-3 text-center"">"+data1.recharge_validity+@"<span class=""text-1 text-muted d-block"">Validity</span></div>
+            <div class=""col-7 col-lg-3 my-2 my-lg-0 text-1 text-muted"">"+data1.recharge_short_desc+@"</div>
+            <div class=""col-5 col-lg-3 my-2 my-lg-0 text-end text-lg-center"">
+              <button class=""btn btn-sm btn-outline-primary shadow-none text-nowrap"" type=""submit"">Recharge</button>
+            </div>
+          </div>
+          <hr class=""my-4"">
+";
+                    i++; 
                 }
+                test2.InnerHtml = tested;
             }
 
         }
@@ -157,53 +134,31 @@ public partial class FatchPlan : System.Web.UI.Page
         }
     }
 
-    //public class DataType1
-    //{
-    //    public string EntityList { get; set; }
-    //    public string KeyName { get; set; }
-    //    public string Value { get; set; }
-    //}
+    protected void recharge_circle()
+    {
+        string strSqlCircle = "select * from Api_CircleDetails where active=1 order by circleName";
+        DataTable dtCircle = objDUT.GetDataTable(strSqlCircle);
+        if (dtCircle.Rows.Count > 0)
+        {
+            ddlCircle.DataSource = dtCircle;
+            ddlCircle.DataTextField = "circleName";
+            ddlCircle.DataValueField = "apid";
+            ddlCircle.DataBind();
+            ddlCircle.Items.Insert(0, new ListItem("Select Your Circle", "0"));
+        }
+    }
 
-    //public class DataType2
-    //{
-    //    public string Id { get; set; }
-    //    public string Status { get; set; }
-    //}
-
-    //public class MyData
-    //{
-    //    public DataType1 data1 { get; set; }
-    //    public List<DataType2> data2 { get; set; }
-    //}
-    //protected void jsondata()
-    //{
-    //    var data = @"[{
-    //            ""data1"": {
-    //                ""EntityList"": ""Attribute"",
-    //                ""KeyName"": ""AkeyName"",
-    //                ""Value"": ""Avalue""
-    //                    },
-    //            ""data2"": [{
-    //                ""Id"": ""jsdksjkjdiejkwp12193jdmsldm"",
-    //                ""Status"": ""OK""
-    //            },
-    //                {
-    //                ""Id"": ""jsdksjdffgdfgkjdiejkwp12193jdmsldm"",
-    //                ""Status"": ""oOK""
-    //            }]
-    //        }]"; //variable with json string
-
-    //    var myData = JsonConvert.DeserializeObject<List<MyData>>(data);
-
-    //    foreach (var item in myData.ToList())
-    //    {
-    //        foreach (var item2 in item.data2.ToList())
-    //        {
-    //        DropDownList1.Items.Add(item2.Id.ToString());
-    //        }
-    //        // Label1.Text = item.Id;
-    //    }
-    //    //  Console.WriteLine($"EntityList:{myData.data1.EntityList}, KeyName:{myData.data1.KeyName}");
-    //}
-
+    protected void recharge_oprator(int apid)
+    {
+        string strSqlOprator = "select * from Api_OpratorDetails where active=1 and apid="+apid+ " order by opratorname";
+        DataTable dtOprator = objDUT.GetDataTable(strSqlOprator);
+        if (dtOprator.Rows.Count > 0)
+        {
+            ddlOperator.DataSource = dtOprator;
+            ddlOperator.DataTextField = "opratorname";
+            ddlOperator.DataValueField = "opratorcode";
+            ddlOperator.DataBind();
+            ddlOperator.Items.Insert(0, new ListItem("Select Your Operator", "0"));
+        }
+    }
 }
